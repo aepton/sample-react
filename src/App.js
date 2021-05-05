@@ -1,55 +1,88 @@
-import React from "react";
-import logo from "./logo.svg";
-import "./App.css";
+import hash from 'object-hash';
+import moment from 'moment';
+import React from 'react';
+import ReactModal from 'react-modal';
 
-/**
- * Uses Tailwind CSS for styling
- * Tailwind file is imported in App.css
- */
+import './App.css';
 
-export default function App() {
+function PhotoToGuess(props) {
+  const birthday = moment('12-14-2019', 'MM-DD-YYYY');
+  const targetDate = moment(props.date, 'MM-DD-YYYY');
   return (
-    <div className="app min-h-screen text-blue-200 flex items-center flex-col p-20">
-      <div className="mb-10 grid grid-cols-4 grid-rows-2 w-1/2 mx-auto">
-        <img className="opacity-25" src={logo} alt="React Logo" width="300" />
-        <img
-          className="col-span-2 row-span-3 animate-spin m-auto"
-          style={{ animationDuration: "30s" }}
-          src={logo}
-          alt="React Logo"
-          width="300"
-        />
-        <img className="opacity-25" src={logo} alt="React Logo" width="300" />
-        <img className="opacity-25" src={logo} alt="React Logo" width="300" />
-        <img className="opacity-25" src={logo} alt="React Logo" width="300" />
-      </div>
-
-      <h1 className="text-2xl lg:text-5xl mb-10 text-right">
-        Welcome to Your New React App{" "}
-        <span className="block text-lg text-blue-400">on DigitalOcean</span>
-      </h1>
-
-      <div className="grid grid-cols-2 grid-rows-2 gap-4">
-        <Button
-          text="DigitalOcean Docs"
-          url="https://www.digitalocean.com/docs/app-platform"
-        />
-        <Button
-          text="DigitalOcean Dashboard"
-          url="https://cloud.digitalocean.com/apps"
-        />
-      </div>
+    <div>
+      <img
+        src={`${process.env.PUBLIC_URL}/secrets/${props.secret}/${props.date}.JPG`}
+        className="photo"
+      />
+      <p>{targetDate.diff(birthday, 'weeks')}</p>
     </div>
   );
 }
 
-function Button({ className, text, url = "#" }) {
+function PhotoApp(props) {
   return (
-    <a
-      href={url}
-      className={`${className} py-3 px-6 bg-purple-400 hover:bg-purple-300 text-purple-800 hover:text-purple-900 block rounded text-center shadow flex items-center justify-center leading-snug text-xs transition ease-in duration-150`}
-    >
-      {text}
-    </a>
+    <div className="App">
+      <PhotoToGuess secret={props.secret} date="2-21-2021" />
+    </div>
   );
 }
+
+class App extends React.Component {
+  constructor () {
+    super();
+
+    this.state = {
+      secret: '',
+      showModal: true,
+      value: ''
+    };
+    
+    this.handleChange = this.handleChange.bind(this);
+    this.handleSubmit = this.handleSubmit.bind(this);
+    this.handleOpenModal = this.handleOpenModal.bind(this);
+    this.handleCloseModal = this.handleCloseModal.bind(this);
+  }
+  
+  handleOpenModal () {
+    this.setState({ showModal: true });
+  }
+  
+  handleCloseModal () {
+    this.setState({ showModal: false });
+  }
+
+  handleChange (event) {
+    this.setState({ value: event.target.value });
+  }
+
+  handleSubmit (event) {
+    this.setState({ secret: hash(this.state.value) });
+    event.preventDefault();
+    this.handleCloseModal();
+  }
+  
+  render () {
+    return (
+      <div>
+        <PhotoApp secret={this.state.secret} />
+        <ReactModal 
+           isOpen={this.state.showModal}
+        >
+          <p>We don't want the whole internet to play this game. She's our Berry.</p>
+          
+          <form onSubmit={this.handleSubmit}>
+            <label>
+              What's her nickname? Hint: it's delicious.
+              <br /><br />
+              <input type="text" value={this.state.value} onChange={this.handleChange} />
+              <br /><br />
+            </label>
+            <input type="submit" value="Play" onSubmit={this.handleSubmit} />
+          </form>
+        </ReactModal>
+      </div>
+    );
+  }
+}
+
+export default App;
